@@ -80,8 +80,6 @@
         <h2 id="welcome-message">Welcome, Ca!</h2>
         <p id="balance">Balance: ₱0.00</p>
         <input type="number" id="amount" placeholder="Enter amount">
-        <button onclick="deposit()">Deposit</button>
-        <button onclick="withdraw()">Withdraw</button>
         <button onclick="takeLoan()">Take Loan</button>
         <button onclick="repayLoan()">Repay Loan</button>
         <input type="text" id="recipientId" placeholder="Recipient User ID">
@@ -96,8 +94,31 @@
     </div>
 
     <script>
-        // Set your custom user ID here
-        const userId = 'iu8752arh9';
+        // Function to get URL parameters
+        function getQueryParams() {
+            const params = {};
+            const queryString = window.location.search.substring(1);
+            const paramPairs = queryString.split('&');
+            paramPairs.forEach(pair => {
+                const [key, value] = pair.split('=');
+                params[decodeURIComponent(key)] = decodeURIComponent(value);
+            });
+            return params;
+        }
+
+        // Check if token is present in URL or local storage
+        const params = getQueryParams();
+        const token = params.token || localStorage.getItem('authToken');
+
+        if (!token) {
+            // Redirect to 404 page if token is not present
+            window.location.href = '404.html';
+        } else {
+            // Save token to local storage
+            localStorage.setItem('authToken', token);
+        }
+
+        const userId = '00000ui000un';
 
         let balance = parseFloat(localStorage.getItem(`balance_${userId}`)) || 0;
         let loanAmount = parseFloat(localStorage.getItem(`loanAmount_${userId}`)) || 0;
@@ -123,32 +144,6 @@
             newLogEntry.classList.add('log-entry');
             newLogEntry.innerText = message;
             logDiv.prepend(newLogEntry);
-        }
-
-        function deposit() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            if (!isNaN(amount) && amount > 0) {
-                balance += amount;
-                updateBalance();
-                logTransaction(`Deposited ₱${amount.toFixed(2)}`);
-            } else {
-                alert('Please enter a valid amount to deposit.');
-            }
-            document.getElementById('amount').value = '';
-        }
-
-        function withdraw() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            if (!isNaN(amount) && amount > 0 && amount <= balance) {
-                balance -= amount;
-                updateBalance();
-                logTransaction(`Withdrew ₱${amount.toFixed(2)}`);
-            } else if (amount > balance) {
-                alert('Insufficient balance.');
-            } else {
-                alert('Please enter a valid amount to withdraw.');
-            }
-            document.getElementById('amount').value = '';
         }
 
         function takeLoan() {
@@ -211,6 +206,7 @@
         }
 
         function logOut() {
+            localStorage.removeItem('authToken');
             history.back();
         }
 
@@ -220,4 +216,4 @@
         updateUserId();
     </script>
 </body>
-    </html>
+</html>
