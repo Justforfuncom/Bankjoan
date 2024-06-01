@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Bank Account</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+            opacity: 0;
+            animation: slideIn 1s forwards;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .account {
+            max-width: 300px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .account input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .account button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .logout-btn {
+            width: 100%;
+            padding: 5px;
+            background-color: #FF5733;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .note {
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+            color: #888;
+        }
+        .user-id {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #555;
+        }
+        .log {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        .log-entry {
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="account">
+        <h2 id="welcome-message">Welcome, Ca!</h2>
+        <p id="balance">Balance: $0.00</p>
+        <input type="number" id="amount" placeholder="Enter amount">
+        <button onclick="deposit()">Deposit</button>
+        <button onclick="withdraw()">Withdraw</button>
+        <button onclick="takeLoan()">Take Loan</button>
+        <button onclick="repayLoan()">Repay Loan</button>
+        <input type="text" id="recipientId" placeholder="Recipient User ID">
+        <button onclick="sendMoney()">Send Money</button>
+        <button onclick="buyLoad()">Buy Load</button>
+        <button class="logout-btn" onclick="logOut()">Log Out</button>
+        <div class="user-id" id="user-id"></div>
+        <div class="log" id="log"></div>
+    </div>
+    <div class="note">
+        <p>This is not real.</p>
+    </div>
+
+    <script>
+        // Set your custom user ID here
+        const userId = 'ii8gcet6668';
+
+        let balance = parseFloat(localStorage.getItem(`balance_${userId}`)) || 0;
+        let loanAmount = parseFloat(localStorage.getItem(`loanAmount_${userId}`)) || 0;
+        const name = 'joan';
+
+        function updateBalance() {
+            document.getElementById('balance').innerText = `Balance: $${balance.toFixed(2)} (Loan: $${loanAmount.toFixed(2)})`;
+            localStorage.setItem(`balance_${userId}`, balance);
+            localStorage.setItem(`loanAmount_${userId}`, loanAmount);
+        }
+
+        function updateName() {
+            document.getElementById('welcome-message').innerText = `Welcome, ${name}!`;
+        }
+
+        function updateUserId() {
+            document.getElementById('user-id').innerText = `User ID: ${userId}`;
+        }
+
+        function logTransaction(message) {
+            const logDiv = document.getElementById('log');
+            const newLogEntry = document.createElement('div');
+            newLogEntry.classList.add('log-entry');
+            newLogEntry.innerText = message;
+            logDiv.prepend(newLogEntry);
+        }
+
+        function deposit() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            if (!isNaN(amount) && amount > 0) {
+                balance += amount;
+                updateBalance();
+                logTransaction(`Deposited $${amount.toFixed(2)}`);
+            } else {
+                alert('Please enter a valid amount to deposit.');
+            }
+            document.getElementById('amount').value = '';
+        }
+
+        function withdraw() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            if (!isNaN(amount) && amount > 0 && amount <= balance) {
+                balance -= amount;
+                updateBalance();
+                logTransaction(`Withdrew $${amount.toFixed(2)}`);
+            } else if (amount > balance) {
+                alert('Insufficient balance.');
+            } else {
+                alert('Please enter a valid amount to withdraw.');
+            }
+            document.getElementById('amount').value = '';
+        }
+
+        function takeLoan() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            if (!isNaN(amount) && amount > 0) {
+                balance += amount;
+                loanAmount += amount;
+                updateBalance();
+                logTransaction(`Took loan of $${amount.toFixed(2)}`);
+            } else {
+                alert('Please enter a valid amount to take as a loan.');
+            }
+            document.getElementById('amount').value = '';
+        }
+
+        function repayLoan() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            if (!isNaN(amount) && amount > 0 && amount <= balance && amount <= loanAmount) {
+                balance -= amount;
+                loanAmount -= amount;
+                updateBalance();
+                logTransaction(`Repaid loan of $${amount.toFixed(2)}`);
+            } else if (amount > balance) {
+                alert('Insufficient balance to repay loan.');
+            } else if (amount > loanAmount) {
+                alert('Cannot repay more than the loan amount.');
+            } else {
+                alert('Please enter a valid amount to repay the loan.');
+            }
+            document.getElementById('amount').value = '';
+        }
+
+        function sendMoney() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const recipientId = document.getElementById('recipientId').value.trim();
+            if (!isNaN(amount) && amount > 0 && amount <= balance) {
+                if (recipientId) {
+                    const recipientBalance = parseFloat(localStorage.getItem(`balance_${recipientId}`)) || 0;
+                    balance -= amount;
+                    localStorage.setItem(`balance_${userId}`, balance);
+                    localStorage.setItem(`balance_${recipientId}`, recipientBalance + amount);
+                    updateBalance();
+                    logTransaction(`Sent $${amount.toFixed(2)} to User ID: ${recipientId}`);
+                    alert(`Sent $${amount.toFixed(2)} to ${recipientId}`);
+                } else {
+                    alert('Please enter a valid recipient user ID.');
+                }
+            } else if (amount > balance) {
+                alert('Insufficient balance to send money.');
+            } else {
+                alert('Please enter a valid amount to send.');
+            }
+            document.getElementById('amount').value = '';
+            document.getElementById('recipientId').value = '';
+        }
+
+        function buyLoad() {
+            alert('Still demo and touch some grass.');
+            logTransaction('Attempted to buy load: Still demo and touch some grass.');
+        }
+
+        function logOut() {
+            history.back();
+        }
+
+        // Initialize the balance, name, and user ID when the page loads
+        updateBalance();
+        updateName();
+        updateUserId();
+    </script>
+</body>
+</html>
