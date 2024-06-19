@@ -3,217 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Bank Account</title>
+    <title>Kid's Shop</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 50px;
-            opacity: 0;
-            animation: slideIn 1s forwards;
         }
-        @keyframes slideIn {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        .account {
-            max-width: 300px;
+        .shop {
+            max-width: 600px;
             margin: auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
         }
-        .account input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
+        .shop h2 {
+            text-align: center;
         }
-        .account button {
-            width: 100%;
-            padding: 10px;
+        .item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .item button {
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
-            margin-bottom: 10px;
+            padding: 5px 10px;
         }
-        .logout-btn {
-            width: 100%;
-            padding: 5px;
-            background-color: #FF5733;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            margin-top: 10px;
-            font-size: 12px;
-        }
-        .note {
-            text-align: center;
-            margin-top: 20px;
-            font-style: italic;
-            color: #888;
-        }
-        .user-id {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 12px;
-            color: #555;
-        }
-        .log {
+        .cart {
             margin-top: 20px;
             border-top: 1px solid #ddd;
             padding-top: 10px;
         }
-        .log-entry {
-            font-size: 12px;
-            color: #555;
+        .total {
+            font-weight: bold;
+            text-align: right;
+        }
+        .transaction-code {
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+        }
+        .confirmation {
+            text-align: center;
+            color: green;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="account">
-        <h2 id="welcome-message">Welcome, Ca!</h2>
-        <p id="balance">Balance: ₱0.00</p>
-        <input type="number" id="amount" placeholder="Enter amount">
-        <button onclick="takeLoan()">Take Loan</button>
-        <button onclick="repayLoan()">Repay Loan</button>
-        <input type="text" id="recipientId" placeholder="Recipient User ID">
-        <button onclick="sendMoney()">Send Money</button>
-        <button onclick="buyLoad()">Buy Load</button>
-        <button class="logout-btn" onclick="logOut()">Log Out</button>
-        <div class="user-id" id="user-id"></div>
-        <div class="log" id="log"></div>
-    </div>
-    <div class="note">
-        <p>This is not real.</p>
+    <div class="shop">
+        <h2>Kid's Shop</h2>
+        <div class="item" data-name="Candy" data-price="1.50">
+            <span>Candy - ₱1.50</span>
+            <button onclick="addToCart(this)">Add to Cart</button>
+        </div>
+        <div class="item" data-name="Toy Car" data-price="5.00">
+            <span>Toy Car - ₱5.00</span>
+            <button onclick="addToCart(this)">Add to Cart</button>
+        </div>
+        <div class="item" data-name="Doll" data-price="7.50">
+            <span>Doll - ₱7.50</span>
+            <button onclick="addToCart(this)">Add to Cart</button>
+        </div>
+        <div class="item" data-name="Cookies" data-price="3.00">
+            <span>Cookies - ₱3.00</span>
+            <button onclick="addToCart(this)">Add to Cart</button>
+        </div>
+        <div class="cart">
+            <h3>Cart</h3>
+            <div id="cart-items"></div>
+            <div class="total">Total: ₱<span id="total-amount">0.00</span></div>
+            <button onclick="checkout()">Checkout</button>
+        </div>
+        <div class="transaction-code">
+            <p id="transaction-code-display"></p>
+        </div>
+        <div class="confirmation" id="confirmation-message"></div>
     </div>
 
     <script>
-        // Function to get URL parameters
-        function getQueryParams() {
-            const params = {};
-            const queryString = window.location.search.substring(1);
-            const paramPairs = queryString.split('&');
-            paramPairs.forEach(pair => {
-                const [key, value] = pair.split('=');
-                params[decodeURIComponent(key)] = decodeURIComponent(value);
+        let cart = [];
+        let totalAmount = 0;
+
+        function addToCart(button) {
+            const item = button.parentElement;
+            const name = item.getAttribute('data-name');
+            const price = parseFloat(item.getAttribute('data-price'));
+
+            cart.push({ name, price });
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartItemsDiv = document.getElementById('cart-items');
+            cartItemsDiv.innerHTML = '';
+
+            cart.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.textContent = `${item.name} - ₱${item.price.toFixed(2)}`;
+                cartItemsDiv.appendChild(div);
             });
-            return params;
+
+            totalAmount = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('total-amount').textContent = totalAmount.toFixed(2);
         }
 
-        // Check if token is present in URL or local storage
-        const params = getQueryParams();
-        const token = params.token || localStorage.getItem('authToken');
-
-        if (!token) {
-            // Redirect to 404 page if token is not present
-            window.location.href = '404.html';
-        } else {
-            // Save token to local storage
-            localStorage.setItem('authToken', token);
-        }
-
-        const userId = '00000ui000un';
-
-        let balance = parseFloat(localStorage.getItem(`balance_${userId}`)) || 0;
-        let loanAmount = parseFloat(localStorage.getItem(`loanAmount_${userId}`)) || 0;
-        const name = 'joan';
-
-        function updateBalance() {
-            document.getElementById('balance').innerText = `Balance: ₱${balance.toFixed(2)} (Loan: ₱${loanAmount.toFixed(2)})`;
-            localStorage.setItem(`balance_${userId}`, balance);
-            localStorage.setItem(`loanAmount_${userId}`, loanAmount);
-        }
-
-        function updateName() {
-            document.getElementById('welcome-message').innerText = `Welcome, ${name}!`;
-        }
-
-        function updateUserId() {
-            document.getElementById('user-id').innerText = `User ID: ${userId}`;
-        }
-
-        function logTransaction(message) {
-            const logDiv = document.getElementById('log');
-            const newLogEntry = document.createElement('div');
-            newLogEntry.classList.add('log-entry');
-            newLogEntry.innerText = message;
-            logDiv.prepend(newLogEntry);
-        }
-
-        function takeLoan() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            if (!isNaN(amount) && amount > 0) {
-                balance += amount;
-                loanAmount += amount;
-                updateBalance();
-                logTransaction(`Took loan of ₱${amount.toFixed(2)}`);
-            } else {
-                alert('Please enter a valid amount to take as a loan.');
+        function generateTransactionCode() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const numbers = '0123456789';
+            let code = '';
+            for (let i = 0; i < 4; i++) {
+                code += letters[Math.floor(Math.random() * letters.length)];
+                code += numbers[Math.floor(Math.random() * numbers.length)];
             }
-            document.getElementById('amount').value = '';
+            return code;
         }
 
-        function repayLoan() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            if (!isNaN(amount) && amount > 0 && amount <= balance && amount <= loanAmount) {
-                balance -= amount;
-                loanAmount -= amount;
-                updateBalance();
-                logTransaction(`Repaid loan of ₱${amount.toFixed(2)}`);
-            } else if (amount > balance) {
-                alert('Insufficient balance to repay loan.');
-            } else if (amount > loanAmount) {
-                alert('Cannot repay more than the loan amount.');
-            } else {
-                alert('Please enter a valid amount to repay the loan.');
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Your cart is empty.');
+                return;
             }
-            document.getElementById('amount').value = '';
+
+            const transactionCode = generateTransactionCode();
+            localStorage.setItem('transactionCode', transactionCode);
+            localStorage.setItem('totalAmount', totalAmount);
+
+            document.getElementById('transaction-code-display').textContent = `Transaction Code: ${transactionCode}`;
+            document.getElementById('confirmation-message').textContent = ''; // Clear any previous messages
         }
 
-        function sendMoney() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            const recipientId = document.getElementById('recipientId').value.trim();
-            if (!isNaN(amount) && amount > 0 && amount <= balance) {
-                if (recipientId) {
-                    const recipientBalance = parseFloat(localStorage.getItem(`balance_${recipientId}`)) || 0;
-                    balance -= amount;
-                    localStorage.setItem(`balance_${userId}`, balance);
-                    localStorage.setItem(`balance_${recipientId}`, recipientBalance + amount);
-                    updateBalance();
-                    logTransaction(`Sent ₱${amount.toFixed(2)} to User ID: ${recipientId}`);
-                    alert(`Sent ₱${amount.toFixed(2)} to ${recipientId}`);
-                } else {
-                    alert('Please enter a valid recipient user ID.');
-                }
-            } else if (amount > balance) {
-                alert('Insufficient balance to send money.');
-            } else {
-                alert('Please enter a valid amount to send.');
+        // Check for successful payment
+        function checkPaymentStatus() {
+            const paymentStatus = localStorage.getItem('paymentStatus');
+            if (paymentStatus === 'success') {
+                document.getElementById('confirmation-message').textContent = 'Payment Successful!';
+                localStorage.removeItem('paymentStatus');
+                localStorage.removeItem('transactionCode');
+                localStorage.removeItem('totalAmount');
+                cart = [];
+                updateCart();
             }
-            document.getElementById('amount').value = '';
-            document.getElementById('recipientId').value = '';
         }
 
-        function buyLoad() {
-            alert('Still demo and touch some grass.');
-            logTransaction('Attempted to buy load: Still demo and touch some grass.');
-        }
-
-        function logOut() {
-            localStorage.removeItem('authToken');
-            history.back();
-        }
-
-        // Initialize the balance, name, and user ID when the page loads
-        updateBalance();
-        updateName();
-        updateUserId();
+        // Run this function when the page loads to check for payment status
+        window.onload = checkPaymentStatus;
     </script>
 </body>
 </html>
